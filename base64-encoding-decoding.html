@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Studio Pro</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; --accent: #10b981; --text: #1e293b; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); padding: 40px 20px; color: var(--text); }
+        .card { max-width: 900px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; }
+        
+        /* Tab System */
+        .tabs { display: flex; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+        .tab-btn { flex: 1; padding: 16px; border: none; background: none; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
+        .tab-btn.active { color: var(--primary); background: white; border-bottom: 3px solid var(--primary); }
+        
+        .content { padding: 30px; display: none; }
+        .content.active { display: block; }
+
+        /* Textarea Container */
+        .output-wrapper { position: relative; margin-top: 15px; }
+        textarea { width: 100%; height: 250px; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; resize: none; box-sizing: border-box; background: #fff; }
+        
+        .icon-bar { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; }
+        .icon-btn { background: white; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
+        .icon-btn:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+        .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+        /* Modal Styling */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        .modal h4 { margin-top: 0; margin-bottom: 15px; }
+        .modal label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #64748b; letter-spacing: 0.5px; }
+        .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        
+        .btn { padding: 10px 20px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; }
+        .btn-cancel { background: #e2e8f0; }
+        .btn-confirm { background: var(--primary); color: white; }
+
+        /* Misc */
+        .file-zone { border: 2px dashed #cbd5e1; padding: 40px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .preview-box { margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center; background: #fdfdfd; min-height: 50px; overflow: hidden; }
+        img, video { max-width: 100%; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'encodeSection')">Encode File</button>
+        <button class="tab-btn" onclick="openTab(event, 'decodeSection')">Decode Base64</button>
+    </div>
+
+    <div id="encodeSection" class="content active">
+        <h3>File to Base64</h3>
+        <div class="file-zone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" hidden onchange="processFile()">
+            <strong>Click to upload</strong> or drag a file here
+        </div>
+        <div class="output-wrapper">
+            <div class="icon-bar">
+                <button class="icon-btn" onclick="copyText('outputBase64')" title="Copy Text">
+                    <svg viewBox="0 0 24 24"><path d="M8 17.75a3 3 0 003 3h7a3 3 0 003-3V7.1a3 3 0 00-3-3h-7a3 3 0 00-3 3v10.65z"/><path d="M16 4.25V3.5a2 2 0 00-2-2H5a2 2 0 00-2 2v12.75a2 2 0 002 2h1"/></svg>
+                </button>
+                <button class="icon-btn" onclick="openDownloadModal('encode')" title="Download as .txt">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                </button>
+            </div>
+            <textarea id="outputBase64" readonly placeholder="Base64 result..."></textarea>
+        </div>
+    </div>
+
+    <div id="decodeSection" class="content">
+        <h3>Base64 to File</h3>
+        <div class="output-wrapper">
+            <div class="icon-bar">
+                <button class="icon-btn" onclick="openDownloadModal('decode')" title="Download File">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                </button>
+            </div>
+            <textarea id="inputBase64" oninput="renderContent()" placeholder="Paste Base64 data here..."></textarea>
+        </div>
+        <div id="previewArea" class="preview-box">Preview will appear here</div>
+    </div>
+</div>
+
+<div id="downloadModal" class="modal-overlay">
+    <div class="modal">
+        <h4 id="modalTitle">Download Settings</h4>
+        
+        <label>FILE NAME</label>
+        <input type="text" id="fileNameInput">
+        
+        <div id="extensionGroup">
+            <label>FILE TYPE</label>
+            <select id="fileTypeInput">
+                <optgroup label="Images">
+                    <option value="png">PNG Image (.png)</option>
+                    <option value="jpg">JPG Image (.jpg)</option>
+                    <option value="gif">GIF Image (.gif)</option>
+                    <option value="webp">WebP Image (.webp)</option>
+                </optgroup>
+                <optgroup label="Videos">
+                    <option value="mp4">MP4 Video (.mp4)</option>
+                    <option value="webm">WebM Video (.webm)</option>
+                    <option value="avi">AVI Video (.avi)</option>
+                </optgroup>
+                <optgroup label="Other">
+                    <option value="pdf">PDF Document (.pdf)</option>
+                    <option value="zip">ZIP Archive (.zip)</option>
+                    <option value="txt">Text File (.txt)</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-confirm" id="confirmBtn" onclick="confirmDownload()">Download Now</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'encode'; // Track if we are downloading a TXT or a Media File
+
+    function openTab(evt, tabName) {
+        document.querySelectorAll(".content").forEach(c => c.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+
+    function processFile() {
+        const file = document.getElementById('fileInput').files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => document.getElementById('outputBase64').value = reader.result;
+        if (file) reader.readAsDataURL(file);
+    }
+
+    function copyText(id) {
+        const text = document.getElementById(id);
+        text.select();
+        document.execCommand('copy');
+        alert("Copied!");
+    }
+
+    function renderContent() {
+        const data = document.getElementById('inputBase64').value.trim();
+        const preview = document.getElementById('previewArea');
+        if (!data.startsWith('data:')) return;
+        if (data.includes('image/')) preview.innerHTML = `<img src="${data}">`;
+        else if (data.includes('video/')) preview.innerHTML = `<video src="${data}" controls></video>`;
+    }
+
+    // Modal Logic
+    function openDownloadModal(mode) {
+        currentMode = mode;
+        const sourceId = mode === 'encode' ? 'outputBase64' : 'inputBase64';
+        const data = document.getElementById(sourceId).value.trim();
+        
+        if (!data) return alert("Nothing to download yet!");
+
+        const modal = document.getElementById('downloadModal');
+        const extGroup = document.getElementById('extensionGroup');
+        const title = document.getElementById('modalTitle');
+        const nameInput = document.getElementById('fileNameInput');
+
+        if (mode === 'encode') {
+            title.innerText = "Download Base64 Text File";
+            extGroup.style.display = 'none'; // No dropdown needed for .txt
+            nameInput.value = `encoded_string_${Date.now()}`;
+        } else {
+            title.innerText = "Decode & Save File";
+            extGroup.style.display = 'block';
+            let type = data.includes('video') ? 'video' : 'image';
+            nameInput.value = `${type}_decoded_${Date.now()}`;
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('downloadModal').style.display = 'none';
+    }
+
+    function confirmDownload() {
+        const sourceId = currentMode === 'encode' ? 'outputBase64' : 'inputBase64';
+        const data = document.getElementById(sourceId).value.trim();
+        const name = document.getElementById('fileNameInput').value || 'file';
+        
+        const link = document.createElement('a');
+        
+        if (currentMode === 'encode') {
+            // Create a Blob for the text content
+            const blob = new Blob([data], { type: 'text/plain' });
+            link.href = URL.createObjectURL(blob);
+            link.download = `${name}.txt`;
+        } else {
+            // Use Data URL directly for media
+            const ext = document.getElementById('fileTypeInput').value;
+            link.href = data;
+            link.download = `${name}.${ext}`;
+        }
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        closeModal();
+    }
+</script>
+
+</body>
+</html>
