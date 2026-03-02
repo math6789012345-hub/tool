@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title></title>
+        <style>
+            body {
+                margin: 0px;
+            }
+            #clock-container {
+                position: relative;
+                width: 90vw;
+                height: 90vw;
+                margin: 0px auto;
+                border: 5px solid black;
+                border-radius: 50%;
+            }
+            .hand, .number, #center {
+                position: absolute;
+            }
+            .number {
+                font-size: 24px;
+                font-weight: 700;
+                transform: translate(-50%, -50%);
+            }
+            #one {
+                top: 12.1vw;
+                left: 64vw;
+            }
+            #two {
+                top: 26vw;
+                left: 77.9vw;
+            }
+            #three {
+                top: 45vw;
+                left: 83vw;
+            }
+            #four {
+                top: 64vw;
+                left: 77.9vw;
+            }
+            #five {
+                top: 77.9vw;
+                left: 64vw;
+            }
+            #six {
+                top: 83vw;
+                left: 45vw;
+            }
+            #seven {
+                top: 77.9vw;
+                left: 26vw;
+            }
+            #eight {
+                top: 64vw;
+                left: 12.1vw;
+            }
+            #nine {
+                top: 45vw;
+                left: 7vw;
+            }
+            #ten {
+                top: 26vw;
+                left: 12.1vw;
+            }
+            #eleven {
+                top: 12.1vw;
+                left: 26vw;
+            }
+            #twelve {
+                top: 7vw;
+                left: 45vw;
+            }
+            #center {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 2px;
+                height: 2px;
+                border-radius: 50%;
+                background-color: black;
+                border: 0.5px solid white;
+                z-index: 100;
+            }
+            .hand {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+            }
+            .hand-a, .hand-b{
+                float: left;
+            }
+            .hand-b {
+                background-color: #00000025;
+            }
+            #hour, #hour > div {
+                height: 20px;
+            }
+            #hour-a {
+                width: 42.5%;
+            }
+            #hour-b {
+                width: 37.5%;
+                box-sizing: border-box;
+                border: 5px solid black;
+                border-radius: 10% 50% 50% 10%;
+            }
+            #minute, #minute > div {
+                height: 12px;
+            }
+            #minute-a {
+                width: 37.5%;
+            }
+            #minute-b {
+                width: 45%;
+                box-sizing: border-box;
+                border: 3px solid black;
+                border-radius: 10% 50% 50% 10%;
+            }
+            #second, #second > div {
+                height: 6px;
+            }
+            #second-a {
+                width: 32.5%;
+            }
+            #second-b {
+                width: 55%;
+                box-sizing: border-box;
+                border: 3px solid black;
+                border-radius: 10% 50% 50% 10%;
+            }
+        </style>
+    </head>
+    <body>
+        <br><br>
+        <div id="clock-container">
+            <div id="center"></div>
+            <div id="second" class="hand">
+                <div id="second-a" class="hand-a"></div>
+                <div id="second-b" class="hand-b"></div>
+                <div id="second-c" class="hand-c"></div>
+            </div>
+            <div id="minute" class="hand">
+                <div id="minute-a" class="hand-a"></div>
+                <div id="minute-b" class="hand-b"></div>
+                <div id="minute-c" class="hand-c"></div>
+            </div>
+            <div id="hour" class="hand">
+                <div id="hour-a" class="hand-a"></div>
+                <div id="hour-b" class="hand-b"></div>
+                <div id="hour-c" class="hand-c"></div>
+            </div>
+            <div id="numbers">
+                <div id="one" class="number">1</div>
+                <div id="two" class="number">2</div>
+                <div id="three" class="number">3</div>
+                <div id="four" class="number">4</div>
+                <div id="five" class="number">5</div>
+                <div id="six" class="number">6</div>
+                <div id="seven" class="number">7</div>
+                <div id="eight" class="number">8</div>
+                <div id="nine" class="number">9</div>
+                <div id="ten" class="number">10</div>
+                <div id="eleven" class="number">11</div>
+                <div id="twelve" class="number">12</div>
+            </div>
+        </div>
+        <script>
+            setInterval(() => {
+                let date = Date.now();
+                document.querySelector("#second").style.transform = "translate(-50%, -50%)" + " rotate(" + (-90 + (date % (60 * 1000)) / (60 * 1000) * 360) + "deg)";
+                document.querySelector("#minute").style.transform = "translate(-50%, -50%)" + " rotate(" + (-90 + (date % (60 * 60 * 1000)) / (60 * 60 * 1000) * 360) + "deg)";
+                document.querySelector("#hour").style.transform = "translate(-50%, -50%)" + " rotate(" + (90 + (date % (12 * 60 * 60 * 1000)) / (12 * 60 * 60 * 1000) * 360) + "deg)";
+            }, 1);
+        </script>
+    </body>
+</html>
