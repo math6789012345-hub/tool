@@ -89,10 +89,10 @@
             </div>
             <div class="tool-container">
                 <div class="tool-icon-container">
-                    <span class="tool-icon fa fa-clock-o"></span>
+                    <span class="tool-icon fa fa-pdf"></span>
                 </div>
                 <div class="tool-name-container">
-                    <span class="tool-name">Digital Clock</span>
+                    <span class="tool-name">Merge PDFs</span>
                 </div>
             </div>
             <div class="tool-container">
@@ -148,6 +148,36 @@
                     <span class="tool-icon ">i</span>
                 </div>
                 <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+        </div>
+        <script>
+            let i, j, k;
+            document.querySelectorAll(".tool-container").forEach(item => {
+                item.addEventListener("click", () => {
+                    window.open(item.querySelector(".tool-name").innerText.toLowerCase().replaceAll(" ", "-") + ".html", "_blank");
+                });
+            });
+        </script>
+    </body>
+            </html>                <div class="tool-name-container">
                     <span class="tool-name">Tool</span>
                 </div>
             </div>
