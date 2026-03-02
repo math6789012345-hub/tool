@@ -36,7 +36,28 @@
                 float: left;
                 padding: 11px;
                 font-size: 36px;
-                
+            }
+            #search-tool {
+                width: 90%;
+                height: 40px;
+                border: 2px solid black;
+                border-radius: 10px;
+                padding: 2px;
+                margin: 0 auto;
+            }
+            #search-tool > input{
+                float: left;
+                width: 85%;
+                height: 40px;
+                border: 2px solid black;
+                border-radius: 10px 0 0 10px;
+            }
+            #search-tool-button {
+                float: left;
+                width: 15%;
+                height: 40px;
+                border: 2px solid black;
+                border-radius: 0 10px 10px 0;
             }
             #tools-container {
                 display: flex;
@@ -70,6 +91,7 @@
                 overflow-wrap: break-word;
                 padding-bottom: 10px;
             }
+            
         </style>
     </head>
     <body>
@@ -78,12 +100,123 @@
             <span id="logo-name-tool">Tools</span>
         </div>
         <br>
+        <div id="search-tool">
+            <input type="search" placeholder="Search Tool...">
+            <button id="search-tool-button"><span class="material-symbols-outlined">search</span></button>
+        </div>
+        <br>
         <div id="tools-container">
             <div class="tool-container">
                 <div class="tool-icon-container">
                     <span class="tool-icon fa fa-file"></span>
                 </div>
                 <div class="tool-name-container">
+                    <span class="tool-name">Export Text File</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon fa fa-pdf"></span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Merge PDFs</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+            <div class="tool-container">
+                <div class="tool-icon-container">
+                    <span class="tool-icon ">i</span>
+                </div>
+                <div class="tool-name-container">
+                    <span class="tool-name">Tool</span>
+                </div>
+            </div>
+        </div>
+        <script>
+            let i, j, k;
+            document.querySelectorAll(".tool-container").forEach(item => {
+                item.addEventListener("click", () => {
+                    window.open(item.querySelector(".tool-name").innerText.toLowerCase().replaceAll(" ", "-") + ".html", "_blank");
+                });
+            });
+            document.querySelector("#search-tool").querySelector("input").addEventListener("input", () => {
+                document.querySelectorAll(".tool-container").forEach(item => {
+                    if(!item.querySelector(".tool-name").innerText.toLowerCase().includes(document.querySelector("#search-tool").querySelector("input").value.toLowerCase())){
+                        item.style.display = "none";
+                    }else{
+                        item.style.display = "block";
+                    }
+                });
+            });
+            document.querySelector("#search-tool-button").addEventListener("click", () => {
+                alert("Unnecessary Button");
+            });
+        </script>
+    </body>
+                    </html>                <div class="tool-name-container">
                     <span class="tool-name">Export Text File</span>
                 </div>
             </div>
