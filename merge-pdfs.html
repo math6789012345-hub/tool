@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Merger - Page Progress</title>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 30px; background-color: var(--bg); }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+        
+        nav { margin-bottom: 15px; }
+        .home-link { color: #555; font-size: 1.5rem; text-decoration: none; }
+
+        /* File List */
+        #fileList { margin-bottom: 20px; max-height: 250px; overflow-y: auto; }
+        .file-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px; border: 1px solid #eee; background: #fff; 
+            margin-bottom: 8px; border-radius: 8px;
+        }
+        .file-info { display: flex; flex-direction: column; }
+        .file-name { font-weight: 600; color: #333; font-size: 0.95rem; }
+        .file-meta { font-size: 0.8rem; color: #888; }
+        .remove-btn { color: #ff4d4d; border: none; background: none; cursor: pointer; font-size: 1.2rem; }
+
+        /* Inputs & Buttons */
+        .input-area { background: #f9f9f9; padding: 15px; border-radius: 10px; border: 2px dashed #cbd5e0; text-align: center; }
+        
+        .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+        button { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.3s; }
+        
+        #mergeBtn { background: var(--primary); color: white; display: flex; flex-direction: column; align-items: center; }
+        #clearBtn { background: #e2e8f0; color: #4a5568; flex: 0.3; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Progress Overlay */
+        #loaderOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.96); display: none; 
+            flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        }
+        .progress-container { width: 85%; background: #edf2f7; height: 16px; border-radius: 20px; margin: 20px 0; overflow: hidden; border: 1px solid #e2e8f0; }
+        #progressBar { width: 0%; height: 100%; background: linear-gradient(90deg, #28a745, #34d399); transition: width 0.4s ease; }
+        .status-text { font-weight: bold; color: #2d3748; font-size: 1.1rem; }
+        #percentageLabel { font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-top: 5px; }
+
+        /* Modal */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal { background: white; padding: 25px; border-radius: 12px; width: 340px; text-align: center; }
+        .modal input { width: 90%; padding: 12px; margin: 15px 0; border: 1px solid #e2e8f0; border-radius: 6px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <nav><a href="index.html" class="home-link"><i class="fas fa-home"></i></a></nav>
+
+    <div class="container">
+        <div id="loaderOverlay">
+            <div class="status-text" id="statusText">Preparing Pages...</div>
+            <div class="progress-container">
+                <div id="progressBar"></div>
+            </div>
+            <div id="pageCountStatus" style="font-weight: 600; color: #4a5568;">0 / 0 Pages Merged</div>
+            <div id="percentageLabel">0%</div>
+        </div>
+
+        <h2>Merge PDFs</h2>
+        <div id="fileList"></div>
+
+        <div class="input-area">
+            <input type="file" id="pdfInput" accept="application/pdf" multiple>
+        </div>
+
+        <div class="btn-row">
+            <button id="mergeBtn" disabled>
+                <span id="btnMainText">Merge PDFs</span>
+                <small id="btnSubText" style="font-weight: normal; font-size: 0.75rem;"></small>
+            </button>
+            <button id="clearBtn" disabled>Clear</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 10px;"></i>
+            <h3>Merge Complete</h3>
+            <p>Save file as:</p>
+            <input type="text" id="fileNameInput" value="merged-pdf" onfocus="this.select()">
+            <div class="btn-row">
+                <button id="cancelModal" style="background:#f7fafc;">Cancel</button>
+                <button id="confirmDownload" style="background:var(--success); color:white;">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let finalPdfBytes = null;
+        let totalPagesInSelection = 0;
+
+        const pdfInput = document.getElementById('pdfInput');
+        const fileListDiv = document.getElementById('fileList');
+        const mergeBtn = document.getElementById('mergeBtn');
+        const btnSubText = document.getElementById('btnSubText');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        const loader = document.getElementById('loaderOverlay');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const pageCountStatus = document.getElementById('pageCountStatus');
+        const percentageLabel = document.getElementById('percentageLabel');
+        
+        const modal = document.getElementById('modalOverlay');
+        const fileNameInput = document.getElementById('fileNameInput');
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB'][i];
+        }
+
+        function updateUI() {
+            fileListDiv.innerHTML = selectedFiles.length === 0 ? '<p style="color:#a0aec0; text-align:center; padding: 20px;">No files selected.</p>' : '';
+            
+            totalPagesInSelection = 0;
+            let totalBytes = 0;
+
+            selectedFiles.forEach((item, index) => {
+                totalPagesInSelection += item.pages;
+                totalBytes += item.file.size;
+
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <div class="file-info">
+                        <span class="file-name">${item.file.name}</span>
+                        <span class="file-meta">${item.pages} Pages • ${formatBytes(item.file.size)}</span>
+                    </div>
+                    <button class="remove-btn" onclick="removeFile(${index})"><i class="fas fa-times"></i></button>
+                `;
+                fileListDiv.appendChild(div);
+            });
+
+            if(selectedFiles.length >= 2) {
+                mergeBtn.disabled = false;
+                btnSubText.textContent = `${totalPagesInSelection} total pages (${formatBytes(totalBytes)})`;
+            } else {
+                mergeBtn.disabled = true;
+                btnSubText.textContent = selectedFiles.length === 1 ? "Add more files" : "";
+            }
+            clearBtn.disabled = selectedFiles.length === 0;
+        }
+
+        pdfInput.addEventListener('change', async (e) => {
+            for (const file of Array.from(e.target.files)) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                    selectedFiles.push({ file: file, pages: pdf.getPageCount() });
+                } catch (err) { alert("Error reading " + file.name); }
+            }
+            pdfInput.value = '';
+            updateUI();
+        });
+
+        window.removeFile = (index) => {
+            selectedFiles.splice(index, 1);
+            updateUI();
+        };
+
+        clearBtn.addEventListener('click', () => { selectedFiles = []; updateUI(); });
+
+        mergeBtn.addEventListener('click', async () => {
+            loader.style.display = 'flex';
+            progressBar.style.width = '0%';
+            pageCountStatus.textContent = `0 / ${totalPagesInSelection} Pages Merged`;
+            percentageLabel.textContent = `0%`;
+            
+            await new Promise(r => setTimeout(r, 300));
+
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                let mergedPagesCount = 0;
+
+                for (const item of selectedFiles) {
+                    statusText.textContent = `Merging: ${item.file.name}`;
+                    
+                    const arrayBuffer = await item.file.arrayBuffer();
+                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    
+                    // Add pages one by one to update progress if file is large, 
+                    // or per file for better performance. 
+                    copiedPages.forEach(p => mergedPdf.addPage(p));
+                    
+                    mergedPagesCount += item.pages;
+                    
+                    // Calculate percentage based on PAGES
+                    let progressPercent = Math.round((mergedPagesCount / totalPagesInSelection) * 100);
+                    
+                    // Update UI
+                    progressBar.style.width = progressPercent + '%';
+                    pageCountStatus.textContent = `${mergedPagesCount} / ${totalPagesInSelection} Pages Merged`;
+                    percentageLabel.textContent = `${progressPercent}%`;
+
+                    await new Promise(r => setTimeout(r, 100)); // Visual pause
+                }
+
+                statusText.textContent = "Finalizing File...";
+                finalPdfBytes = await mergedPdf.save();
+                
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    modal.style.display = 'flex';
+                    fileNameInput.focus();
+                }, 600);
+
+            } catch (err) {
+                loader.style.display = 'none';
+                alert("Merge failed. Please try again.");
+            }
+        });
+
+        document.getElementById('confirmDownload').addEventListener('click', () => {
+            let name = fileNameInput.value.trim() || 'merged-pdf';
+            if(!name.toLowerCase().endsWith('.pdf')) name += '.pdf';
+            const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = name;
+            link.click();
+            modal.style.display = 'none';
+        });
+
+        document.getElementById('cancelModal').addEventListener('click', () => modal.style.display = 'none');
+    </script>
+</body>
+</html>
