@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Page title</title>
+</head>
+<body>
+    <input type="text" id="input">
+    <div id="output"></div>
+    <button id="copy">Copy</button>
+    <script>
+const rotatedAlphabet = [["A", "∀"], ["B", "ᗺ"], ["C", "Ɔ"], ["D", "ᗡ"], ["E", "Ǝ"], ["F", "Ⅎ"], ["G", "⅁"], ["H", "H"], ["I", "I"], ["J", "Ր"], ["K", "ʞ"], ["L", "˥"], ["M", "...M..."], ["N", "N"], ["O", "O"], ["P", "Ԁ"], ["Q", "Ό"], ["R", "ᴚ"], ["S", "S"], ["T", "⊥"], ["U", "∩"], ["V", "Λ"], ["W", "...W..."], ["X", "X"], ["Y", "⅄"], ["Z", "Z"], ["a", "ɐ"], ["b", "...b..."], ["c", "ɔ"], ["d", "...d..."], ["e", "ǝ"], ["f", "ɟ"], ["g", "ƃ"], ["h", "ɥ"], ["i", "ᴉ"], ["j", "ɾ"], ["k", "ʞ"], ["l", "l"], ["m", "ɯ"], ["n", "...n..."], ["o", "o"], ["p", "...p..."], ["q", "...q..."], ["r", "ɹ"], ["s", "s"], ["t", "ʇ"], ["u", "...u..."], ["v", "ʌ"], ["w", "ʍ"], ["x", "x"], ["y", "ʎ"], ["z", "z"], ["...M...", "W"], ["...W...", "M"], ["...b...", "q"], ["...d...", "p"], ["...p...", "d"], ["...q...", "b"], ["...n...", "u"], ["...u...", "n"]];
+
+document.querySelector("#input").addEventListener("input", (e) => {
+    output = document.querySelector("#input").value;
+    rotatedAlphabet.forEach(item => {
+        output = output.replaceAll(...item);
+    });
+    document.querySelector("#output").innerHTML = output.split('').reverse().join('');
+});
+document.querySelector("#copy").addEventListener("click", (e) => {
+    navigator.clipboard.writeText(document.querySelector("#output").innerHTML);
+});
+    </script>
+</body>
+</html>
