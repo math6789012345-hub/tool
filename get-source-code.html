@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Code Fetcher</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 900px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* Fixed Container Layout */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        input[type="url"] {
+            flex: 1;
+            min-width: 0; /* Prevents input from pushing container wide */
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input:focus { border-color: #007bff; }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .primary-btn { background: #007bff; color: white; }
+        .secondary-btn { background: #e4e6eb; color: #050505; }
+
+        /* Output Window */
+        .output-wrapper {
+            position: relative;
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tool-btn {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #444;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .tool-btn:hover { color: white; border-color: #666; }
+
+        pre {
+            margin: 0;
+            padding: 15px;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            min-height: 300px;
+            max-height: 600px;
+            overflow: auto;
+            /* Default: Wrap */
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        pre.no-wrap {
+            white-space: pre;
+            word-break: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 style="margin-top:0">Source Code Explorer</h2>
+        
+        <div class="input-group">
+            <input type="url" id="urlInput" placeholder="https://raw.githubusercontent.com/user/repo/file.js">
+            <button class="btn secondary-btn" id="pasteBtn" title="Paste from clipboard">
+                <i class="fas fa-paste"></i>
+            </button>
+            <button class="btn primary-btn" id="fetchBtn">
+                <i class="fas fa-sync"></i> Fetch
+            </button>
+        </div>
+
+        <div class="output-wrapper">
+            <div class="toolbar">
+                <button class="tool-btn" id="toggleWrap" title="Toggle Wrap">
+                    <i class="fas fa-align-left"></i> Wrap: ON
+                </button>
+                <button class="tool-btn" id="copyBtn"><i class="fas fa-copy"></i> </button>
+                <button class="tool-btn" id="downBtn"><i class="fas fa-download"></i> </button>
+            </div>
+            <pre id="codeDisplay">Fetched code will appear here...</pre>
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const codeDisplay = document.getElementById('codeDisplay');
+        const toggleWrap = document.getElementById('toggleWrap');
+
+        // Toggle Wrap Logic
+        let wrapMode = true;
+        toggleWrap.addEventListener('click', () => {
+            wrapMode = !wrapMode;
+            codeDisplay.classList.toggle('no-wrap', !wrapMode);
+            toggleWrap.innerHTML = wrapMode ? 
+                '<i class="fas fa-align-left"></i> Wrap: ON' : 
+                '<i class="fas fa-arrows-alt-h"></i> Wrap: OFF';
+        });
+
+        // Paste Logic
+        document.getElementById('pasteBtn').addEventListener('click', async () => {
+            const text = await navigator.clipboard.readText();
+            urlInput.value = text;
+        });
+
+        // Fetch Logic (The "Always Works" Method)
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const targetUrl = urlInput.value.trim();
+            if(!targetUrl) return alert("Enter a URL");
+
+            codeDisplay.textContent = "Connecting to proxy and fetching data...";
+
+            // Use AllOrigins as a primary proxy (most reliable for raw text)
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Could not reach source.");
+                const data = await response.text();
+                codeDisplay.textContent = data;
+            } catch (err) {
+                codeDisplay.textContent = "Error: " + err.message + "\n\nSuggestions:\n1. Check your internet.\n2. Ensure the URL is a direct link to a file (not a website UI).";
+            }
+        });
+
+        // Copy Logic
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(codeDisplay.textContent);
+            const btn = document.getElementById('copyBtn');
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+            setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> Copy', 2000);
+        });
+
+        // Download Logic
+        document.getElementById('downBtn').addEventListener('click', () => {
+            const blob = new Blob([codeDisplay.textContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "downloaded_source.txt";
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
