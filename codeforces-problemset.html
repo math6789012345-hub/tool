@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codeforces Problem Opener</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        h2 { margin-top: 0; color: #1a1a1a; font-size: 1.5rem; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: border 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status {
+            font-size: 0.9rem;
+            padding: 10px;
+            background: #e7f3ff;
+            color: #0056b3;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .info {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>CF Problem Opener</h2>
+    <div id="status">Connecting to Codeforces API...</div>
+
+    <div class="form-group">
+        <label>1. Search Starting Problem</label>
+        <input type="text" id="search" placeholder="Search ID (158A) or Name..." disabled>
+    </div>
+
+    <div class="form-group">
+        <label>2. Select from Results</label>
+        <select id="probSelect" disabled>
+            <option>Loading...</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>3. Number of Problems to Open</label>
+        <input type="number" id="countInput" value="1" min="1" max="50">
+    </div>
+
+    <button id="openBtn" disabled>Open Problems</button>
+
+    <div class="info">
+        <strong>Note:</strong> Most browsers block multiple tabs. If only one tab opens, click the <strong>Pop-up blocked</strong> icon in your address bar and select "Always allow."
+    </div>
+</div>
+
+<script>
+    let allProblems = [];
+
+    async function init() {
+        try {
+            const response = await fetch('https://codeforces.com/api/problemset.problems');
+            const data = await response.json();
+            
+            if (data.status !== "OK") throw new Error("API Error");
+
+            const probs = data.result.problems;
+            const stats = data.result.problemStatistics;
+
+            // Merge and map
+            allProblems = probs.map((p, i) => ({
+                id: `${p.contestId}${p.index}`,
+                name: p.name,
+                url: `https://codeforces.com/problemset/problem/${p.contestId}/${p.index}`,
+                solvedCount: stats[i].solvedCount,
+                searchKey: `${p.contestId}${p.index} ${p.name}`.toLowerCase()
+            }));
+
+            // Sort by solved count DESC
+            allProblems.sort((a, b) => b.solvedCount - a.solvedCount);
+
+            // Enable UI
+            document.getElementById('status').innerText = "Ready! Problems sorted by popularity.";
+            document.getElementById('search').disabled = false;
+            document.getElementById('probSelect').disabled = false;
+            document.getElementById('openBtn').disabled = false;
+
+            renderList("");
+        } catch (e) {
+            document.getElementById('status').innerText = "Failed to load data.";
+            document.getElementById('status').style.background = "#ffebe9";
+        }
+    }
+
+    function renderList(filter) {
+        const select = document.getElementById('probSelect');
+        const cleanFilter = filter.toLowerCase().replace(/\s/g, '');
+        
+        const filtered = allProblems.filter(p => 
+            p.searchKey.replace(/\s/g, '').includes(cleanFilter)
+        ).slice(0, 500); // Limit DOM rendering for performance
+
+        select.innerHTML = filtered.map(p => {
+            // We store the actual global index in the value
+            const globalIdx = allProblems.indexOf(p);
+            return `<option value="${globalIdx}">${p.id} - ${p.name} (${p.solvedCount} solves)</option>`;
+        }).join('');
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+        renderList(e.target.value);
+    });
+
+    document.getElementById('openBtn').addEventListener('click', () => {
+        const startIdx = parseInt(document.getElementById('probSelect').value);
+        const count = parseInt(document.getElementById('countInput').value);
+        
+        if (isNaN(startIdx)) return alert("Please select a problem first.");
+
+        // Determine the end boundary
+        const endIdx = Math.min(startIdx + count, allProblems.length);
+        const actualCount = endIdx - startIdx;
+
+        if (actualCount > 10) {
+            if (!confirm(`Open ${actualCount} tabs?`)) return;
+        }
+
+        for (let i = startIdx; i < endIdx; i++) {
+            window.open(allProblems[i].url, '_blank');
+        }
+    });
+
+    init();
+</script>
+
+</body>
+</html>
