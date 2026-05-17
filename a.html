@@ -44,12 +44,9 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
-        .download-btn.downloading {
-            background-color: #e67e22; /* Orange during download */
-            cursor: wait;
-        }
+        /* Style for clicked/downloaded buttons */
         .download-btn.downloaded {
-            background-color: #2ecc71; /* Green when complete */
+            background-color: #2ecc71; /* Green */
             color: white;
         }
         .download-btn.downloaded:hover {
@@ -70,6 +67,7 @@
     <div class="grid-container" id="buttonContainer"></div>
 
     <script>
+        // Array of Google Drive File IDs
         const fileIds = [
             "1YyOlGqAVnvXKTSxp2BJsoi_Rggqn3arO", "1OA4Q4U2xLpbAOUV9fAW4uHGXMVGrr_5b", "1KtWxA8kCqTvrKAqiIHYKZw8dIDM9-tdZ",
             "1Stgm025OIx_hRn2TSzSHNVhpX_GN-Ox0", "1PmZ3EZ6ds7wE3QjZE1avoHfMYnERGFNs", "1iYPG6OIZamJMU87JpKqwCGNI5oZy0HtM",
@@ -171,77 +169,47 @@
             "15Is5fD1DI7Co"
         ];
 
+        // Retrieve existing downloaded file lists from LocalStorage (or create empty array)
         let downloadedFiles = JSON.parse(localStorage.getItem('downloadedDriveFiles')) || [];
+
         const container = document.getElementById('buttonContainer');
 
+        // Loop through all IDs and dynamically create buttons
         fileIds.forEach((id, index) => {
             const button = document.createElement('button');
             button.className = 'download-btn';
             button.dataset.id = id;
+            
+            // Build simple inner HTML structure
             button.innerHTML = `<span class="badge">#${index + 1}</span> ${id}`;
 
+            // Check if this ID was downloaded in a previous session
             if (downloadedFiles.includes(id)) {
                 button.classList.add('downloaded');
             }
 
+            // Click event handler
             button.addEventListener('click', function() {
-                if (!button.classList.contains('downloading')) {
-                    handleDirectDownload(id, button);
-                }
+                handleDownload(id, button);
             });
 
             container.appendChild(button);
         });
 
-        async function handleDirectDownload(id, buttonElement) {
-            // Put button into temporary downloading state (Turns Orange)
-            buttonElement.classList.add('downloading');
-            const originalText = buttonElement.innerHTML;
-            buttonElement.innerHTML = `<span class="badge">⌛</span> Fetching...`;
-
+        function handleDownload(id, buttonElement) {
+            // 1. Trigger the actual browser download sequence
             const downloadUrl = `https://drive.google.com/uc?export=download&id=${id}`;
+            window.open(downloadUrl, '_blank');
 
-            try {
-                // Fetch the data stream directly
-                const response = await fetch(downloadUrl);
-                
-                if (!response.ok) throw new Error('Network response failure.');
-                
-                const blob = await response.blob();
-
-                // Generate a virtual download link
-                const blobUrl = window.URL.createObjectURL(blob);
-                const tempLink = document.createElement('a');
-                tempLink.href = blobUrl;
-                
-                // Force filename processing
-                tempLink.setAttribute('download', `file_${id}`); 
-                document.body.appendChild(tempLink);
-                
-                // Programmatically trigger download prompt
-                tempLink.click();
-
-                // Cleanup virtual structures
-                document.body.removeChild(tempLink);
-                window.URL.revokeObjectURL(blobUrl);
-
-                // Success formatting updates (Turns Green)
-                buttonElement.classList.remove('downloading');
+            // 2. Change color visually by applying class
+            if (!buttonElement.classList.contains('downloaded')) {
                 buttonElement.classList.add('downloaded');
-                buttonElement.innerHTML = originalText;
+            }
 
-                // Save to localStorage persistence array
-                if (!downloadedFiles.includes(id)) {
-                    downloadedFiles.push(id);
-                    localStorage.setItem('downloadedDriveFiles', JSON.stringify(downloadedFiles));
-                }
-
-            } catch (error) {
-                console.error("Download pipeline error:", error);
-                alert("Could not process auto-download. The file might be restricted, require a login context, or be too large for background cross-origin scripts.");
-                // Reset styling back to default state
-                buttonElement.classList.remove('downloading');
-                buttonElement.innerHTML = originalText;
+            // 3. Save state to Local Storage if it doesn't already exist there
+            if (!downloadedFiles.includes(id)) {
+                downloadedFiles.push(id);
+                localStorage.setItem('downloadedDriveFiles', JSON.stringify(downloadedFiles));
             }
         }
     </script>
