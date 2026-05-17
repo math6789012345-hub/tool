@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Mass Downloader</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f4f9;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #1f1f1f;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #5f6368;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .download-btn {
+            padding: 14px 28px;
+            font-size: 16px;
+            color: white;
+            background-color: #1a73e8;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        .download-btn:hover {
+            background-color: #1557b0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .download-btn:active {
+            background-color: #1c54a3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Google Drive Downloader</h2>
+        <p>Click below to download all 5 files simultaneously.</p>
+        <button class="download-btn" onclick="downloadAllFiles()">Download All</button>
+    </div>
+
+    <script>
+        // Array containing your specific Google Drive File IDs
+        const fileIds = [
+            "1YyOlGqAVnvXKTSxp2BJsoi_Rggqn3arO",
+            "1OA4Q4U2xLpbAOUV9fAW4uHGXMVGrr_5b",
+            "1KtWxA8kCqTvrKAqiIHYKZw8dIDM9-tdZ",
+            "1Stgm025OIx_hRn2TSzSHNVhpX_GN-Ox0",
+            "1PmZ3EZ6ds7wE3QjZE1avoHfMYnERGFNs"
+        ];
+
+        function downloadAllFiles() {
+            fileIds.forEach((id, index) => {
+                // Generate the direct download URL for each ID
+                const downloadUrl = `https://docs.google.com/uc?export=download&id=${id}`;
+                
+                // Staggering the downloads by 400ms keeps the browser from blocking 
+                // the requests as spam or crashing.
+                setTimeout(() => {
+                    const hiddenAnchor = document.createElement('a');
+                    hiddenAnchor.href = downloadUrl;
+                    hiddenAnchor.setAttribute('download', '');
+                    hiddenAnchor.style.display = 'none';
+                    
+                    document.body.appendChild(hiddenAnchor);
+                    hiddenAnchor.click();
+                    document.body.removeChild(hiddenAnchor);
+                }, index * 400); 
+            });
+        }
+    </script>
+
+</body>
+</html>
